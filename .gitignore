@@ -1,0 +1,56 @@
+# =========================
+# Environment & secrets
+# =========================
+.env
+.env.*
+*.key
+*.pem
+
+# =========================
+# Python cache & build
+# =========================
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg-info/
+dist/
+build/
+
+# =========================
+# Jupyter
+# =========================
+.ipynb_checkpoints/
+
+# =========================
+# Virtual environments
+# =========================
+.venv/
+venv/
+env/
+
+# =========================
+# ML / Training outputs
+# =========================
+checkpoints/
+ckpt/
+outputs/
+models/
+wandb/
+lightning_logs/
+
+# =========================
+# Temporary / OS files
+# =========================
+.DS_Store
+Thumbs.db
+*.swp
+*.tmp
+*.log.bak
+
+# =========================
+# IDEs
+# =========================
+.vscode/
+.idea/
