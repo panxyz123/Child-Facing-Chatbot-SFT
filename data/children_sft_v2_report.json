@@ -1,0 +1,154 @@
+{
+  "v1_rows": 1200,
+  "v1_by_source_age": {
+    "local": {
+      "4-6": 311,
+      "14-18": 146,
+      "7-9": 56,
+      "0-3": 266,
+      "10-13": 1
+    },
+    "hf": {
+      "7-9": 125,
+      "0-3": 41,
+      "4-6": 192,
+      "14-18": 60,
+      "10-13": 2
+    }
+  },
+  "v1_hf_age_matches": {
+    "7-9": 18,
+    "14-18": 18,
+    "4-6": 40,
+    "0-3": 17
+  },
+  "v1_hf_dropped_age_mismatch": 261,
+  "v1_hf_dropped_text_not_in_hf": 66,
+  "v1_gemini_age_accuracy_on_found": 0.263,
+  "plan": {
+    "0-3": {
+      "local_speech": 180,
+      "v1_hf_reused": 17,
+      "new_gemini": 48,
+      "available_in_hf": 1924
+    },
+    "4-6": {
+      "local_speech": 180,
+      "v1_hf_reused": 40,
+      "new_gemini": 22,
+      "available_in_hf": 1909
+    },
+    "7-9": {
+      "local_speech": 0,
+      "v1_hf_reused": 18,
+      "new_gemini": 245,
+      "available_in_hf": 1902
+    },
+    "10-13": {
+      "local_speech": 0,
+      "v1_hf_reused": 0,
+      "new_gemini": 264,
+      "available_in_hf": 1901
+    },
+    "14-18": {
+      "local_speech": 0,
+      "v1_hf_reused": 18,
+      "new_gemini": 245,
+      "available_in_hf": 1924
+    }
+  },
+  "api_calls_planned": 824,
+  "qa": {
+    "0-3": {
+      "candidates": 245,
+      "fkgl_band": [
+        -3.64,
+        8.49
+      ],
+      "dropped_outliers": 5,
+      "final": 240,
+      "final_by_origin": {
+        "v1": 196,
+        "gemini v2": 44
+      },
+      "needs_knowledge": {
+        "True": 59,
+        "False": 181
+      },
+      "fkgl_median": 2.41
+    },
+    "4-6": {
+      "candidates": 242,
+      "fkgl_band": [
+        -2.57,
+        9.04
+      ],
+      "dropped_outliers": 4,
+      "final": 238,
+      "final_by_origin": {
+        "v1": 219,
+        "gemini v2": 19
+      },
+      "needs_knowledge": {
+        "False": 171,
+        "True": 67
+      },
+      "fkgl_median": 3.03
+    },
+    "7-9": {
+      "candidates": 263,
+      "fkgl_band": [
+        2.36,
+        11.79
+      ],
+      "dropped_outliers": 7,
+      "final": 240,
+      "final_by_origin": {
+        "v1": 17,
+        "gemini v2": 223
+      },
+      "needs_knowledge": {
+        "True": 133,
+        "False": 107
+      },
+      "fkgl_median": 7.02
+    },
+    "10-13": {
+      "candidates": 264,
+      "fkgl_band": [
+        4.4,
+        13.72
+      ],
+      "dropped_outliers": 4,
+      "final": 240,
+      "final_by_origin": {
+        "gemini v2": 240
+      },
+      "needs_knowledge": {
+        "False": 70,
+        "True": 170
+      },
+      "fkgl_median": 9.11
+    },
+    "14-18": {
+      "candidates": 263,
+      "fkgl_band": [
+        4.73,
+        17.46
+      ],
+      "dropped_outliers": 5,
+      "final": 240,
+      "final_by_origin": {
+        "v1": 16,
+        "gemini v2": 224
+      },
+      "needs_knowledge": {
+        "False": 85,
+        "True": 155
+      },
+      "fkgl_median": 11.22
+    }
+  },
+  "fkgl_median_increases_with_age": true,
+  "final_rows": 1198
+}
