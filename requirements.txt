@@ -1,0 +1,4 @@
+langgraph
+lancedb
+sentence-transformers
+langchain-openai
