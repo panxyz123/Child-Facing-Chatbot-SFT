@@ -54,3 +54,9 @@ Thumbs.db
 # =========================
 .vscode/
 .idea/
+
+# =========================
+# Large local data / caches
+# =========================
+rag/lancedb_data/
+data/*_cache_v2.jsonl
