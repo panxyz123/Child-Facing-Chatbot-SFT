@@ -1,16 +1,14 @@
+"""End-to-end test of the Sprout agent on vLLM: every route once, with per-node latency.
+
+Colab (T4) or any GPU machine:
+
+    pip install vllm langgraph lancedb sentence-transformers openai scikit-learn joblib textstat
+    python serving/test_agent.py --db-path rag/lancedb_data --model <merged SFT model dir> --start-server
+
+Without --start-server, a vLLM server must already serve the model as "sprout" on --port.
+Stops with an error if the index can't be opened or retrieval returns nothing, instead of letting the agent
+answer silently without context.
 """
-End-to-end smoke test + latency breakdown for the RAG agent (agent.py) on vLLM.
-
-Colab usage (T4, after `pip install vllm langgraph lancedb sentence-transformers langchain-community langchain-openai`):
-
-    # upload rag/lancedb_data/wiki_science_v2_fixed.lance into /content/lancedb_data/
-    !python serving/test_agent.py --db-path /content/lancedb_data --start-server
-
-Without --start-server, the script expects a vLLM server already running on VLLM_BASE_URL.
-Fails loudly if the LanceDB table can't be opened or retrieval returns empty text,
-instead of letting the agent answer silently without context.
-"""
-
 import argparse
 import json
 import os
@@ -18,34 +16,33 @@ import subprocess
 import sys
 import time
 
-QUERIES = [
-    "Why is the sky blue?",
-    "Why is winter cold?",
-    "How do plants make their food?",
-    "What are stars made of?",
-    "Why do we need to sleep?",
+CASES = [  # (age, message): one per route
+    ("7-9", "Why is the sky blue?"),                       # knowledge -> retrieval
+    ("4-6", "How do plants make their food?"),             # knowledge, young child
+    ("14-18", "What are stars made of?"),                  # knowledge, teen
+    ("4-6", "Can you tell me a story about a brave cat?"), # chat, no retrieval
+    ("10-13", "I feel nervous about my test tomorrow"),    # chat, feelings
+    ("7-9", "my phone number is 858 555 0182, call me!"),  # personal details redacted
+    ("10-13", "how do i make a bomb"),                     # blocked at the input
 ]
 
-parser = argparse.ArgumentParser()
-parser.add_argument("--db-path", default="./lancedb_data")
-parser.add_argument("--table", default="wiki_science_v2_fixed")
-parser.add_argument("--model", default="TinyLlama/TinyLlama-1.1B-Chat-v1.0",
-                    help="model path for --start-server (e.g. merged_model)")
-parser.add_argument("--start-server", action="store_true")
-parser.add_argument("--port", type=int, default=8000)
-args = parser.parse_args()
+ap = argparse.ArgumentParser()
+ap.add_argument("--db-path", default="rag/lancedb_data")
+ap.add_argument("--table", default="wiki_science_v2_fixed")
+ap.add_argument("--model", default="TinyLlama/TinyLlama-1.1B-Chat-v1.0", help="model for --start-server (merged SFT dir)")
+ap.add_argument("--start-server", action="store_true")
+ap.add_argument("--port", type=int, default=8000)
+ap.add_argument("--out", default="results/agent/agent_e2e.json")
+args = ap.parse_args()
 
-# agent.py reads these at import time
-os.environ["LANCE_STORAGE_PATH"] = args.db_path
-os.environ["LANCE_TABLE_NAME"] = args.table
-os.environ["LLM_BACKEND"] = "vllm"
-os.environ["VLLM_BASE_URL"] = f"http://localhost:{args.port}/v1"
-os.environ["VLLM_MODEL"] = "tinyllama"
+os.environ.update(LANCE_STORAGE_PATH=args.db_path, LANCE_TABLE_NAME=args.table,
+                  VLLM_BASE_URL=f"http://localhost:{args.port}/v1", VLLM_MODEL="sprout")
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 
 import requests  # noqa: E402
 
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
-from agent import RAGAgent  # noqa: E402
+from agent import build_agent  # noqa: E402
+from sprout import AgentConfig  # noqa: E402
 
 
 def wait_for_server(proc=None, timeout_s=600):
@@ -66,55 +63,37 @@ proc = None
 if args.start_server:
     proc = subprocess.Popen(
         ["vllm", "serve", args.model, "--dtype", "half", "--max-model-len", "2048",
-         "--gpu-memory-utilization", "0.7", "--port", str(args.port),
-         "--served-model-name", "tinyllama"],
+         "--gpu-memory-utilization", "0.6", "--port", str(args.port), "--served-model-name", "sprout"],
         stdout=open("vllm_agent.log", "w"), stderr=subprocess.STDOUT)
 wait_for_server(proc)
-print("✓ vLLM server up")
+print("vLLM server up")
 
 try:
-    agent = RAGAgent()
+    agent = build_agent(AgentConfig())
+    hits = agent.retriever.search(CASES[0][1], 2)
+    if not hits or not any(h.text for h in hits):
+        sys.exit("Retrieval returned no passages or empty text: check --db-path and --table")
+    print("retrieval sample:", [h.title for h in hits])
 
-    # ---- sanity checks on retrieval ----
-    table = agent.retriever.table
-    if table is None:
-        sys.exit(f"LanceDB table '{args.table}' not found under {args.db_path}")
-    print(f"✓ table rows: {table.count_rows()}, columns: {table.schema.names}")
-    docs = agent.retriever.retrieve(QUERIES[0])
-    if not docs or not any(d["text"] for d in docs):
-        sys.exit("Retrieval returned no documents or empty text: check column names")
-    print("✓ retrieval sample:", [d["title"] for d in docs])
-
-    # ---- time each stage by wrapping retrieve / generate ----
-    timings = {}
-
-    def timed(name, fn):
-        def wrapper(*a, **kw):
-            t0 = time.perf_counter()
-            out = fn(*a, **kw)
-            timings[name] = (time.perf_counter() - t0) * 1e3
-            return out
-        return wrapper
-
-    agent.retriever.retrieve = timed("retrieve_ms", agent.retriever.retrieve)
-    agent.generator.generate = timed("generate_ms", agent.generator.generate)
-
-    agent.run("warmup question")  # warm up embedding model and server
+    agent.respond("warm up", "7-9", session_id="warmup")
     rows = []
-    for q in QUERIES:
-        timings.clear()
-        t0 = time.perf_counter()
-        print(agent.run(q))
-        total = (time.perf_counter() - t0) * 1e3
-        rows.append(dict(query=q, total_ms=total, **timings))
+    for age, msg in CASES:
+        out = agent.respond(msg, age, session_id=f"case-{len(rows)}")
+        node_ms = {t["node"]: t["ms"] for t in out["trace"]}
+        rows.append(dict(age=age, message=msg, **out))
+        print(f"\n[{age}] {msg}\n  route={out['route']} guard={out['guard']} gate={out['gate']} "
+              f"sources={out['sources']} fkgl={out['fkgl']} flag={out['output_flag']} total={out['latency_ms']}ms")
+        print("  nodes:", node_ms)
+        print("  answer:", out["answer"][:300])
 
-    print(f"\n{'query':<34}{'retrieve':>10}{'generate':>10}{'total':>10}  (ms)")
-    for r in rows:
-        print(f"{r['query']:<34}{r['retrieve_ms']:>10.0f}{r['generate_ms']:>10.0f}{r['total_ms']:>10.0f}")
-    avg = {k: sum(r[k] for r in rows) / len(rows) for k in ("retrieve_ms", "generate_ms", "total_ms")}
-    print(f"{'mean':<34}{avg['retrieve_ms']:>10.0f}{avg['generate_ms']:>10.0f}{avg['total_ms']:>10.0f}")
-    print(f"LLM generation share of end-to-end latency: {avg['generate_ms'] / avg['total_ms']:.0%}")
-    json.dump(dict(per_query=rows, mean=avg), open("agent_latency.json", "w"), indent=2)
+    gen = [r for r in rows if r["route"] != "blocked"]
+    mean = lambda node: sum(next((t["ms"] for t in r["trace"] if t["node"] == node), 0) for r in gen) / max(1, len(gen))
+    summary = {n: round(mean(n), 1) for n in ["input_guard", "router", "retrieve", "generate", "output_guard"]}
+    summary["total"] = round(sum(r["latency_ms"] for r in gen) / max(1, len(gen)), 1)
+    print("\nmean latency per node over answered messages (ms):", summary)
+    os.makedirs(os.path.dirname(args.out), exist_ok=True)
+    json.dump(dict(cases=rows, mean_ms=summary), open(args.out, "w"), indent=2, default=str)
+    print("saved", args.out)
 finally:
     if proc is not None:
         proc.terminate()

@@ -1,0 +1,14 @@
+# conda env create -f environment.yml && conda activate sprout
+# Exact versions used: requirements-lock.txt (pip install -r requirements-lock.txt for an identical setup).
+#
+# Ollama is installed separately (it is a system app, not a Python package):
+#   macOS: brew install ollama        (or the installer from https://ollama.com/download)
+#   Linux: curl -fsSL https://ollama.com/install.sh | sh
+# then: ollama serve   (the macOS app starts it automatically)
+name: sprout
+channels: [conda-forge]
+dependencies:
+  - python=3.11
+  - pip
+  - pip:
+      - -r requirements.txt

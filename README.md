@@ -230,6 +230,25 @@ Prefix caching cut time-to-first-token from 305 ms to 48 ms (6.3x) with 32 reque
 an upper bound since requests retrieving different documents share much less. With fixed output lengths static
 batching wastes nothing, which is why the gap narrows at 32 requests.
 
+## Setup
+
+```
+conda env create -f environment.yml && conda activate sprout
+python -m pytest tests -q                 # offline tests of the agent graph, no GPU needed
+python scripts/train_router.py            # knowledge router -> models/router.joblib
+```
+
+Run the agent on a laptop with [Ollama](https://ollama.com) serving the model
+([yxpan/sprout-tinyllama-1.1b](https://huggingface.co/yxpan/sprout-tinyllama-1.1b), exported with
+`scripts/export_model.py`), or on a GPU with vLLM:
+
+```
+(cd models/sprout && ollama create sprout -f Modelfile)
+VLLM_BASE_URL=http://localhost:11434/v1 VLLM_MODEL=sprout python agent.py --age 7-9 --trace "why is the sky blue?"
+```
+
+The retrieval index (`rag/lancedb_data/`) is not in the repository; rebuild it with the notebooks in `rag/`.
+
 ## Repository layout
 
 | path | what it is |

@@ -1,0 +1,94 @@
+{
+  "n_queries": 192,
+  "coverage": 0.3645833333333333,
+  "best_method": "vector",
+  "gate": {
+    "auroc": 0.8296934482067722,
+    "-3.22": {
+      "retrieve_rate": 0.8958333333333334,
+      "precision": 0.18023255813953487,
+      "recall": 1.0
+    },
+    "-0.73": {
+      "retrieve_rate": 0.75,
+      "precision": 0.20833333333333334,
+      "recall": 0.967741935483871
+    },
+    "0.67": {
+      "retrieve_rate": 0.5989583333333334,
+      "precision": 0.23478260869565218,
+      "recall": 0.8709677419354839
+    },
+    "1.78": {
+      "retrieve_rate": 0.5,
+      "precision": 0.28125,
+      "recall": 0.8709677419354839
+    },
+    "2.74": {
+      "retrieve_rate": 0.4010416666666667,
+      "precision": 0.3246753246753247,
+      "recall": 0.8064516129032258
+    },
+    "4.02": {
+      "retrieve_rate": 0.25,
+      "precision": 0.4583333333333333,
+      "recall": 0.7096774193548387
+    }
+  },
+  "methods": {
+    "vector": {
+      "success_at_1": 0.2188,
+      "success_at_3": 0.276,
+      "success_at_5": 0.3229,
+      "mrr": 0.2531,
+      "ndcg_at_5": 0.571,
+      "p50_ms": 101.55,
+      "p95_ms": 186.205
+    },
+    "fts": {
+      "success_at_1": 0.0833,
+      "success_at_3": 0.1719,
+      "success_at_5": 0.1875,
+      "mrr": 0.1232,
+      "ndcg_at_5": 0.372,
+      "p50_ms": 10.05,
+      "p95_ms": 17.06
+    },
+    "hybrid_a0.3": {
+      "success_at_1": 0.1875,
+      "success_at_3": 0.2708,
+      "success_at_5": 0.3021,
+      "mrr": 0.2306,
+      "ndcg_at_5": 0.5415,
+      "p50_ms": 117.2,
+      "p95_ms": 206.715
+    },
+    "hybrid_a0.5": {
+      "success_at_1": 0.1823,
+      "success_at_3": 0.2656,
+      "success_at_5": 0.3125,
+      "mrr": 0.228,
+      "ndcg_at_5": 0.5346,
+      "p50_ms": 116.85,
+      "p95_ms": 205.345
+    },
+    "hybrid_a0.7": {
+      "success_at_1": 0.151,
+      "success_at_3": 0.2396,
+      "success_at_5": 0.2969,
+      "mrr": 0.2014,
+      "ndcg_at_5": 0.5021,
+      "p50_ms": 116.85,
+      "p95_ms": 204.76
+    },
+    "hybrid_rerank": {
+      "success_at_1": 0.1615,
+      "success_at_3": 0.25,
+      "success_at_5": 0.2917,
+      "mrr": 0.211,
+      "ndcg_at_5": 0.4569,
+      "p50_ms": 879.6,
+      "p95_ms": 1486.185
+    }
+  }
+}

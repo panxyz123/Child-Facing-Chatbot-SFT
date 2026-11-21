@@ -1,4 +1,39 @@
+# Local environment for the agent, guardrails, retrieval benchmark, judges and model export (Python 3.11).
+# The GPU notebooks (sft/, rl/, eval/, serving/) install their own packages on Colab.
+# Ollama (the local model server used by agent.py on a laptop) is a system app, not a pip package: see environment.yml.
+
+# agent and its HTTP service
 langgraph
+openai
+requests
+fastapi
+uvicorn
+
+# retrieval
 lancedb
 sentence-transformers
-langchain-openai
+pandas
+numpy
+
+# router, guardrail and readability evaluation
+scikit-learn
+scipy
+joblib
+textstat
+wordfreq
+openpyxl
+
+# model export and Hugging Face
+torch
+transformers
+peft
+huggingface_hub
+datasets
+
+# Gemini judges (hallucination, retrieval relevance) and dataset building
+google-genai
+python-dotenv
+pydantic
+
+# tests
+pytest

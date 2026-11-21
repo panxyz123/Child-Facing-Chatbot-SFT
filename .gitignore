@@ -60,3 +60,10 @@ Thumbs.db
 # =========================
 rag/lancedb_data/
 data/*_cache_v2.jsonl
+
+# exported models and downloaded adapters (published on the Hugging Face Hub instead)
+models/sprout/
+adapters/
+
+# agent traces
+logs/
