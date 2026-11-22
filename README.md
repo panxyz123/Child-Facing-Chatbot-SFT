@@ -22,9 +22,12 @@ served by a 1.1B model that fits on a single T4 GPU.
 - **Age-aligned answers.** LoRA SFT, then GRPO with a readability reward. SFT raised answers at the right reading
   level from 39% to 60%; GRPO raised the share of questions whose answers get harder as the set age rises from 75%
   to 97.5%.
-- **Low hallucination on knowledge questions.** Questions that need facts are routed to hybrid retrieval over a
-  cleaned Wikipedia science corpus, and the answer is grounded in what was retrieved; hallucination is evaluated on
-  the knowledge questions of the test split, with and without retrieval.
+- **Fewer hallucinated facts.** On the same test questions and judge, false claims fell from 33.0% to 14.9% by
+  moving the generator to Qwen2.5-1.5B with the same LoRA SFT recipe and lower-temperature sampling
+  ([`eval/README.md`](eval/README.md)).
+- **Retrieval that covers what children ask.** Adding Simple English Wikipedia raised the share of knowledge
+  questions with an answering passage from 37.0% to 67.4%; hybrid search + rerank reaches Hit@5 0.92
+  ([`rag/README.md`](rag/README.md)).
 - **Safety.** Input guardrails (unsafe topics, personal information, prompt injection) and output guardrails (unsafe
   content, reading level against the set age).
 - **Small model, low deployment cost.** TinyLlama-1.1B-Chat with LoRA: about 2.2 GB of fp16 weights and about 22 KB of
@@ -182,6 +185,15 @@ FKGL within 2 grade levels by age group: 0-3 60.1% to 64.3%, 4-6 57.1% to 64.0%,
 - Teen answers remain too simple (median FKGL 0.8 below the reference for 14-18), so GRPO did not fix the gap the
   SFT failure analysis found.
 
+### Hallucination and retrieval
+
+| | before | after |
+|---|---|---|
+| false claims in answers (30 test questions, same judge) | 33.0% (TinyLlama SFT) | 14.9% (Qwen2.5-1.5B SFT, temperature 0.3) |
+| routed questions with an answering passage (181) | 37.0% | 67.4% (+ Simple English Wikipedia) |
+
+Details, method and limitations: [`eval/README.md`](eval/README.md), [`rag/README.md`](rag/README.md).
+
 ### v1 dataset
 
 **SFT** (LoRA r=32 on all linear layers, lr 1e-4, alpha 64), 600-row hold-out:
@@ -257,6 +269,7 @@ The retrieval index (`rag/lancedb_data/`) is not in the repository; rebuild it w
 | `sft/` | LoRA SFT experiments and failure analysis, plus the original RapidFire AI experiment |
 | `rl/` | GRPO with age-conditioned rewards, HF vs vLLM rollout benchmark |
 | `rag/` | corpus cleaning, LanceDB index, vector / full-text / hybrid search and reranking |
+| `eval/` | hallucination evaluation (claim-level judge, paired comparisons) and guardrail tests |
 | `agent.py` | LangGraph agent (vLLM or Ollama backend) |
 | `serving/` | vLLM serving benchmarks and the end-to-end agent test |
 
