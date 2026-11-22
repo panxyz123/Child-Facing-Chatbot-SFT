@@ -1,0 +1,182 @@
+qid,age,question,p_knowledge,domain,science,covered,best_method_hit
+test-1,14-18,What’s the best way to study for exams?,0.6050528883934021,other,non-science,False,False
+test-2,10-13,Why do some animals go extinct?,0.9933899641036987,life science,science,True,True
+test-4,14-18,Why do some cars have different types of fuel?,0.9952682852745056,physical science,science,True,True
+test-8,10-13,Why do some dreams feel real?,0.9848211407661438,health and body,non-science,True,False
+test-13,10-13,"Why do we call the day after today ""tomorrow""?",0.9838559627532959,language and arts,non-science,False,False
+test-16,10-13,What is anxiety?,0.9450434446334839,health and body,non-science,True,True
+test-25,14-18,Why is our heart so important?,0.9304516911506653,health and body,non-science,False,False
+test-28,10-13,Why do we have a belly button?,0.9194786548614502,health and body,non-science,False,False
+test-30,10-13,Why do teachers assign homework?,0.9493672251701355,society and culture,non-science,False,False
+test-33,14-18,Why do I need to wash my hands so often?,0.9665193557739258,health and body,non-science,True,True
+test-34,10-13,What’s the fastest land vehicle?,0.7581781148910522,other,non-science,False,False
+test-36,10-13,Why is popcorn so popular at the movies?,0.9612969756126404,society and culture,non-science,False,False
+test-37,4-6,what does it do,0.7275674343109131,other,non-science,True,True
+test-39,14-18,What is the significance of the number 12 in timekeeping?,0.8780110478401184,history,non-science,True,False
+test-40,14-18,How do you think fear impacts our decisions?,0.9711300730705261,life science,science,True,True
+test-41,7-9,What’s the coolest thing we can learn in science?,0.5817632079124451,other,non-science,False,False
+test-42,14-18,Why do some cultures have different calendars?,0.9612584114074707,society and culture,non-science,False,False
+test-47,14-18,Why are some months longer than others?,0.9510325193405151,earth and space,science,False,False
+test-48,7-9,What are electric cars?,0.8631651401519775,physical science,science,True,True
+test-50,14-18,Why do we have different seasons?,0.9841722846031189,earth and space,science,True,True
+test-51,7-9,Can some animals really see in the dark?,0.9777892231941223,life science,science,True,True
+test-52,14-18,Why do I feel nervous before a doctor’s appointment?,0.9300979375839233,health and body,non-science,False,False
+test-53,7-9,Why do planes fly in the sky?,0.9912988543510437,physical science,science,True,False
+test-54,14-18,How big is the universe?,0.641706109046936,earth and space,science,False,False
+test-56,14-18,What’s the difference between needs and wants when it comes to shopping?,0.7681713700294495,society and culture,non-science,True,True
+test-59,14-18,What are some effective study techniques?,0.6654885411262512,other,non-science,True,True
+test-60,14-18,Why do we learn about ratios and proportions?,0.9622752070426941,other,non-science,False,False
+test-63,0-3,Why do we have a kitchen?,0.8121621608734131,society and culture,non-science,True,True
+test-64,10-13,What does it mean to save money?,0.8119974136352539,society and culture,non-science,True,True
+test-73,7-9,What is the biggest planet?,0.8287665843963623,earth and space,science,False,False
+test-76,7-9,What makes dreams weird?,0.9671138525009155,life science,science,False,False
+test-77,14-18,What are some signs that I should see a doctor?,0.8479127883911133,health and body,non-science,False,False
+test-79,7-9,Why do we laugh with friends?,0.8275002241134644,life science,science,False,False
+test-82,7-9,What’s the difference between rhythm and beat?,0.929906964302063,language and arts,non-science,True,True
+test-91,10-13,Can animals dream?,0.99216628074646,life science,science,False,False
+test-92,10-13,Why are some animals nocturnal?,0.9927608966827393,life science,science,True,True
+test-93,4-6,when these are cook  you can eat them,0.8862477540969849,other,non-science,False,False
+test-94,14-18,Why are trains so long?,0.9296505451202393,other,non-science,False,False
+test-95,0-3,What color is a pumpkin?,0.805263876914978,life science,science,True,False
+test-99,10-13,Why do we sing in the shower?,0.9477142095565796,other,non-science,False,False
+test-102,14-18,Why is it important to see a doctor regularly?,0.9833926558494568,health and body,non-science,False,False
+test-104,10-13,"What are electric scooters, and how do they work?",0.6510212421417236,physical science,science,False,False
+test-106,14-18,What’s the deal with interest rates?,0.9327296018600464,society and culture,non-science,False,False
+test-107,10-13,What is a healthy way to exercise?,0.8156875967979431,health and body,non-science,True,False
+test-111,4-6,where are the wheels for ,0.598168134689331,physical science,science,False,False
+test-113,4-6,What makes thunder?,0.9837596416473389,earth and space,science,False,False
+test-114,4-6,What do rabbits like to eat?,0.9680384397506714,life science,science,False,False
+test-116,0-3,this is hay,0.4449644088745117,life science,science,False,False
+test-118,14-18,What are common fears for teens?,0.5973454713821411,society and culture,non-science,False,False
+test-119,7-9,Can learning be fun?,0.517835795879364,other,non-science,True,True
+test-121,14-18,What are inequalities and why do we use them?,0.9451137185096741,other,non-science,False,False
+test-122,7-9,Why do people like to read fantasy books?,0.8150020241737366,language and arts,non-science,False,False
+test-123,14-18,Why do we need to see a doctor for check-ups?,0.9423902034759521,health and body,non-science,False,False
+test-124,14-18,Why do we have speed limits?,0.9844299554824829,society and culture,non-science,False,False
+test-125,7-9,Why do I laugh when someone tells a joke?,0.8745535016059875,health and body,non-science,True,True
+test-126,0-3,Why do we eat berries?,0.9921945333480835,health and body,non-science,False,False
+test-128,14-18,Why do we celebrate New Year's on January 1st?,0.9140055775642395,history,non-science,False,False
+test-129,10-13,What are ecosystems?,0.96367347240448,life science,science,True,True
+test-131,7-9,Why do people feel sad sometimes?,0.9685251116752625,health and body,non-science,False,False
+test-132,10-13,"What is Daylight Saving Time, and why do we change our clocks?",0.9824948906898499,society and culture,non-science,False,False
+test-134,7-9,Why does the Moon change shape?,0.9893156290054321,earth and space,science,False,False
+test-136,7-9,What makes chocolate so yummy?,0.9638965129852295,life science,science,False,False
+test-137,10-13,What are the advantages of riding a bike?,0.923665463924408,health and body,non-science,False,False
+test-141,0-3,Can dreams help us?,0.9332844614982605,life science,science,True,True
+test-143,14-18,How did ancient civilizations keep track of time?,0.915902316570282,history,non-science,True,True
+test-147,10-13,What’s the role of a teacher?,0.857248067855835,society and culture,non-science,False,False
+test-148,10-13,Why do I get butterflies in my stomach?,0.8601291179656982,health and body,non-science,False,False
+test-150,10-13,What’s the best way to prepare for a test?,0.5079421401023865,other,non-science,True,True
+test-152,4-6,What do you call frozen rain?,0.7598991990089417,earth and space,science,True,False
+test-155,10-13,What is a piggy bank for?,0.8727195262908936,society and culture,non-science,False,False
+test-156,10-13,What’s the difference between fear and phobia?,0.959241509437561,health and body,non-science,True,True
+test-157,10-13,How do flavors combine to make delicious dishes?,0.9426921010017395,life science,science,True,True
+test-158,14-18,What makes ice float?,0.9546658992767334,physical science,science,False,False
+test-159,10-13,What does it mean if I dream about falling?,0.8926990032196045,health and body,non-science,False,False
+test-163,14-18,What's the best way to prepare for a test?,0.5325447916984558,other,non-science,False,False
+test-166,10-13,Why do we have to eat healthy food?,0.9838376641273499,health and body,non-science,True,True
+test-168,14-18,Why is physical education part of the curriculum?,0.9845473170280457,society and culture,non-science,True,False
+test-169,14-18,How can I reduce my carbon footprint?,0.6055598855018616,earth and space,science,True,True
+test-170,0-3,Why do we hold hands?,0.9311464428901672,society and culture,non-science,False,False
+test-174,10-13,How do our ears help us enjoy music?,0.9549601674079895,health and body,non-science,True,False
+test-176,10-13,Why do some foods smell so good?,0.9959824085235596,life science,science,True,True
+test-177,7-9,How can a snake unhinge its jaw?,0.9424964785575867,life science,science,False,False
+test-180,7-9,What makes a chameleon change colors?,0.8674907684326172,life science,science,False,False
+test-182,7-9,What is a magnet?,0.9285393357276917,physical science,science,True,True
+test-183,10-13,"How do we measure time with seconds, minutes, and hours?",0.8907109498977661,earth and space,science,True,True
+test-184,10-13,How do people earn money?,0.8347675800323486,society and culture,non-science,True,True
+test-190,4-6,What happens when we listen to music?,0.8759239315986633,life science,science,False,False
+test-191,14-18,What’s a budget?,0.5075441598892212,society and culture,non-science,True,True
+test-192,0-3,that is a horse there,0.4625870883464813,life science,science,False,False
+test-194,0-3,some ducks here,0.6406668424606323,life science,science,False,False
+test-195,0-3,What does a banana taste like?,0.9232151508331299,life science,science,False,False
+test-196,4-6,why does his balloon thing why does his balloon went up the way,0.6376573443412781,physical science,science,True,True
+test-199,10-13,Why do we like some foods more than others?,0.9785681366920471,life science,science,True,True
+test-202,7-9,What was the Berlin Wall?,0.7600323557853699,history,non-science,True,True
+test-204,10-13,Why do some musical instruments sound different?,0.9815651774406433,physical science,science,True,False
+test-205,14-18,Why is it important to save money?,0.947443425655365,society and culture,non-science,False,False
+test-208,10-13,Why do we have music in movies?,0.97995525598526,language and arts,non-science,True,True
+test-212,14-18,Why is the ozone layer important?,0.9954481720924377,earth and space,science,True,True
+test-214,10-13,What’s the difference between fruits and vegetables?,0.9752412438392639,life science,science,False,False
+test-215,14-18,What makes trains so efficient for long-distance travel?,0.9476369023323059,physical science,science,False,False
+test-216,10-13,What does it mean to compose music?,0.7392204999923706,language and arts,non-science,True,True
+test-217,10-13,What happens if we don’t change our clocks for Daylight Saving Time?,0.9500546455383301,society and culture,non-science,False,False
+test-219,10-13,"What is sound, anyway?",0.900229811668396,physical science,science,False,False
+test-221,7-9,How hot is the sun?,0.9534345269203186,earth and space,science,True,False
+test-223,7-9,Why do friends make you feel happy?,0.8527395725250244,society and culture,non-science,False,False
+test-224,10-13,"What is a leap year, and why do we have one?",0.9519150853157043,earth and space,science,True,True
+test-231,14-18,Why do we have traffic lights?,0.958909809589386,society and culture,non-science,False,False
+test-234,10-13,What does an astronaut eat in space?,0.9514744877815247,earth and space,science,False,False
+test-236,14-18,Can you explain what a quadratic equation is?,0.969070553779602,other,non-science,False,False
+test-237,7-9,Why do families take pictures together?,0.5329465866088867,society and culture,non-science,False,False
+test-240,10-13,"Who was Martin Luther King Jr., and why is he important?",0.7741270661354065,history,non-science,False,False
+test-241,14-18,Can you explain why we get angry?,0.7994702458381653,health and body,non-science,True,True
+test-245,4-6,What do clouds do?,0.9771081209182739,earth and space,science,True,True
+test-246,7-9,What’s the difference between sweet and salty?,0.9328349828720093,life science,science,False,False
+test-247,7-9,Why do elephants have big ears?,0.9895517230033875,life science,science,False,False
+test-248,14-18,What does it mean to have a checking account?,0.8686800003051758,society and culture,non-science,True,True
+test-250,14-18,Why do we have different names for the days of the week?,0.9762377738952637,history,non-science,True,True
+test-255,10-13,Can animals hear music?,0.9754776358604431,life science,science,False,False
+test-257,14-18,Why is it important to have a budget?,0.8594691753387451,society and culture,non-science,False,False
+test-259,7-9,What do our brains do?,0.9649776816368103,health and body,non-science,True,True
+test-260,7-9,Why do some trees lose their leaves?,0.9301523566246033,life science,science,True,True
+test-261,10-13,Why did the pyramids in Egypt get built?,0.9810177087783813,history,non-science,False,False
+test-264,10-13,What’s the difference between a ship and a boat?,0.9632953405380249,other,non-science,False,False
+test-265,10-13,Is it normal to be afraid of the dark?,0.896247923374176,health and body,non-science,False,False
+test-267,10-13,Why do airplanes have wings?,0.9804370999336243,physical science,science,True,True
+test-270,14-18,What are galaxies made of?,0.9838162660598755,earth and space,science,False,False
+test-271,10-13,How does pollution affect animals?,0.9963339567184448,life science,science,True,True
+test-277,10-13,What did the Vikings do that was so adventurous?,0.6242958307266235,history,non-science,True,True
+test-278,14-18,Why do we care about prime numbers?,0.9840409755706787,other,non-science,False,False
+test-281,4-6,that is upside down,0.43798255920410156,other,non-science,False,False
+test-282,4-6,What happens if you mix blue and yellow?,0.8888697028160095,physical science,science,False,False
+test-283,10-13,Why do we feel nervous before a big event?,0.9167243242263794,health and body,non-science,False,False
+test-284,10-13,Do dreams have colors?,0.9519968628883362,life science,science,False,False
+test-289,14-18,Why do we need trees?,0.9472095370292664,life science,science,False,False
+test-291,7-9,Why do teachers give us tests?,0.9617272019386292,society and culture,non-science,False,False
+test-296,10-13,What was the significance of the Declaration of Independence?,0.8322793245315552,history,non-science,False,False
+test-297,4-6,they are flowers,0.6730349659919739,life science,science,False,False
+test-299,14-18,Why do I feel anxious in social situations?,0.7620469331741333,health and body,non-science,False,False
+test-300,4-6,doesn't the red Power Ranger have a white sword,0.4893030822277069,society and culture,non-science,False,False
+test-301,4-6,why do you think it is raining,0.8921859264373779,earth and space,science,False,False
+test-303,10-13,How does food become spicy?,0.972053050994873,life science,science,False,False
+test-304,7-9,What is a vibration?,0.9739917516708374,physical science,science,True,True
+test-306,10-13,What’s the difference between wants and needs?,0.7412481904029846,society and culture,non-science,True,True
+test-308,0-3,What do snails do?,0.9803726673126221,life science,science,False,False
+test-311,4-6,Why do we need to learn?,0.9083760976791382,society and culture,non-science,False,False
+test-313,7-9,What’s a beat in music?,0.8379528522491455,language and arts,non-science,True,False
+test-314,14-18,Why do some cultures have a different start to the new year?,0.9715657234191895,society and culture,non-science,False,False
+test-315,10-13,Why do some people have allergies?,0.9913126826286316,health and body,non-science,False,False
+test-320,7-9,What’s the coolest thing about history?,0.5931224822998047,history,non-science,False,False
+test-322,7-9,How do instruments make sound?,0.9353043437004089,physical science,science,True,False
+test-325,0-3,what color are they,0.7162942290306091,language and arts,non-science,False,False
+test-327,7-9,Why is it good to talk about our feelings?,0.9587821960449219,health and body,non-science,False,False
+test-333,0-3,Why do butterflies fly?,0.9753490090370178,life science,science,False,False
+test-334,7-9,Why do we have day and night?,0.9859582781791687,earth and space,science,False,False
+test-337,0-3,Why do raccoons have masks?,0.9535630941390991,life science,science,False,False
+test-339,10-13,How do dreams change as we get older?,0.9643054604530334,health and body,non-science,False,False
+test-341,7-9,Why do penguins waddle?,0.9581674933433533,life science,science,False,False
+test-342,14-18,Why do people sometimes feel embarrassed about their fears?,0.9434800148010254,health and body,non-science,False,False
+test-345,14-18,"Why do we measure time in hours, minutes, and seconds?",0.9730703830718994,history,non-science,True,False
+test-346,4-6,Why do rainbows appear after it rains?,0.985913097858429,physical science,science,False,False
+test-347,7-9,What is the Earth made of?,0.9738556146621704,earth and space,science,True,False
+test-348,14-18,Why do we have hair on our bodies?,0.9921265840530396,life science,science,False,False
+test-351,14-18,How do we use percentages in real life?,0.9275886416435242,society and culture,non-science,False,False
+test-353,7-9,Why do we need bees?,0.9829313158988953,life science,science,True,True
+test-354,14-18,Why do we sometimes argue with our friends?,0.9247205257415771,society and culture,non-science,False,False
+test-356,7-9,Why do some foods smell funny?,0.9887245297431946,life science,science,False,False
+test-358,7-9,Why do some animals have fur and others have feathers?,0.9944233298301697,life science,science,False,False
+test-360,4-6,Why do we have curtains in our windows?,0.8514387011528015,physical science,science,False,False
+test-361,14-18,Can you explain what a comet is?,0.9613354206085205,earth and space,science,False,False
+test-367,10-13,How do trains stay on the tracks?,0.8838092088699341,physical science,science,True,True
+test-370,7-9,Why do some kids fear loud noises?,0.9772548675537109,health and body,non-science,False,False
+test-372,7-9,Why did people build pyramids in ancient Egypt?,0.9850318431854248,history,non-science,False,False
+test-375,4-6,there was elephants and there is ,0.8077483773231506,life science,science,False,False
+test-376,10-13,Why don’t cars fly?,0.9627642035484314,physical science,science,False,False
+test-379,14-18,Can fear be a good thing?,0.9230983257293701,health and body,non-science,True,True
+test-380,10-13,Why do we have grades in school?,0.9819955825805664,society and culture,non-science,False,False
+test-384,7-9,Why do airplanes fly?,0.9784412980079651,physical science,science,True,False
+test-386,7-9,Why do some animals hibernate in winter?,0.9896993041038513,life science,science,True,True
+test-387,7-9,Why do we have to learn math?,0.9702892899513245,society and culture,non-science,False,False
+test-390,4-6,and what color is that teeth,0.7681070566177368,health and body,non-science,False,False
+test-392,14-18,What is the role of the heart?,0.9357063174247742,health and body,non-science,False,False

@@ -246,6 +246,16 @@ def stage_report(a, queries):
     runs = {json.loads(l)["qid"]: json.loads(l) for l in open(os.path.join(a.out, "runs.jsonl"))}
     rel = load_relevance(os.path.join(a.out, "relevance.jsonl"))
     Q = pd.DataFrame([q for q in queries if q["qid"] in rel and q["qid"] in runs]).set_index("qid")
+    if a.router:
+        # keep only the questions the agent would actually send to retrieval
+        sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
+        from sprout.router import KnowledgeRouter
+        router = KnowledgeRouter(a.router)
+        Q["p_knowledge"] = [router.p_knowledge(t) for t in Q.question]
+        dropped = Q[Q.p_knowledge < a.router_threshold]
+        print(f"router (threshold {a.router_threshold}): {len(Q) - len(dropped)} of {len(Q)} queries are retrieved; "
+              f"dropped, for example: {dropped.question.head(6).tolist()}")
+        Q = Q[Q.p_knowledge >= a.router_threshold]
     print(f"report on {len(Q)} graded queries")
     domain = {}
     jpath = a.domains
@@ -366,7 +376,7 @@ def stage_agree(a, queries):
     import csv
     from collections import Counter
     key = {r["row"]: int(r["judge_grade"]) for r in csv.DictReader(open(os.path.join(a.out, "review_key.csv")))}
-    hum = {r["row"]: r["human_grade"].strip() for r in csv.DictReader(open(os.path.join(a.out, "review_blind.csv")))}
+    hum = {r["row"]: r["human_grade"].strip() for r in csv.DictReader(open(os.path.join(a.out, a.labels)))}
     pairs = [(key[r], int(h)) for r, h in hum.items() if h in ("0", "1", "2")]
     n = len(pairs)
     if not n:
@@ -396,6 +406,9 @@ def main(argv=None):
     ap.add_argument("--out", default="results/retrieval_v2")
     ap.add_argument("--model", default="gemini-3.5-flash-lite", help="judge model")
     ap.add_argument("--limit", type=int, default=None, help="judge only the first N pending queries")
+    ap.add_argument("--router", default=None, help="router.joblib: report only the queries it sends to retrieval")
+    ap.add_argument("--router-threshold", dest="router_threshold", type=float, default=0.4)
+    ap.add_argument("--labels", default="review_blind.csv", help="filled review file (in --out) for --stage agree")
     ap.add_argument("--review", type=int, default=60, help="rows to grade by hand in --stage review")
     ap.add_argument("--domains", default="results/hallucination_v2/judgments.jsonl",
                     help="hallucination judgments, for each question's domain")
