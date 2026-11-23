@@ -26,7 +26,8 @@ served by a 1.1B model that fits on a single T4 GPU.
   moving the generator to Qwen2.5-1.5B with the same LoRA SFT recipe and lower-temperature sampling
   ([`eval/README.md`](eval/README.md)).
 - **Retrieval that covers what children ask.** Adding Simple English Wikipedia raised the share of knowledge
-  questions with an answering passage from 37.0% to 67.4%; hybrid search + rerank reaches Hit@5 0.92
+  questions with an answering passage from 37.0% to 67.4%, and paragraph-aware chunking raised the top-1 answer
+  rate from 28% to 48%
   ([`rag/README.md`](rag/README.md)).
 - **Safety.** Input guardrails (unsafe topics, personal information, prompt injection) and output guardrails (unsafe
   content, reading level against the set age).

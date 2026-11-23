@@ -37,12 +37,13 @@ class AgentConfig:
 
     # retrieval
     db_path: str = os.environ.get("LANCE_STORAGE_PATH", "rag/lancedb_data")
-    table: str = os.environ.get("LANCE_TABLE_NAME", "wiki_science_v2_fixed")
-    retrieval_method: str = "hybrid_rerank"   # TBD: vector | fts | hybrid | hybrid_rerank
-    hybrid_alpha: float = 0.5                 # TBD: weight on the full-text score
+    table: str = os.environ.get("LANCE_TABLE_NAME", "wiki_v4_para")   # paragraph chunks
+    retrieval_method: str = "hybrid_rerank"   # vector | fts | hybrid | hybrid_rerank (best: results/retrieval_v4)
+    rerank_pool: int = 20                     # hybrid candidates the cross-encoder reorders
+    hybrid_alpha: float = 0.5                 # weight on the full-text score
     top_k_docs: int = 2                       # passages in the prompt (TinyLlama has a 2048-token context)
-    passage_words: int = 120                  # each passage cut to this many words
-    gate_threshold: Optional[float] = None    # TBD: min top-1 reranker score to use the passages; None = always use
+    passage_words: int = 150                  # each passage cut to this many words (= the chunk size)
+    gate_threshold: Optional[float] = 2.0     # min top-1 reranker logit to use the passages (keeps ~78%, rag/README.md)
 
     # output checks
     fkgl_too_hard_margin: float = 3.0         # answer FKGL above the age group's 75th percentile + margin is too hard

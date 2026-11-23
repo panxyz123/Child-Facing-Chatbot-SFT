@@ -14,11 +14,13 @@ class ChatLLM:
         self.extra = dict(top_k=top_k, repetition_penalty=repetition_penalty)   # vLLM sampling extensions
 
     def chat(self, messages: List[Dict[str, str]]):
-        """Returns (text, usage) with usage = {prompt_tokens, completion_tokens} as reported by the server."""
+        """Returns (text, usage) with usage = {prompt_tokens, completion_tokens, finish_reason} from the server."""
         out = self.client.chat.completions.create(model=self.model, messages=messages, extra_body=self.extra, **self.params)
         usage = None
         if getattr(out, "usage", None) is not None:
             usage = dict(prompt_tokens=out.usage.prompt_tokens, completion_tokens=out.usage.completion_tokens)
+        if usage is not None:
+            usage["finish_reason"] = out.choices[0].finish_reason      # "length" = cut at max_tokens
         return (out.choices[0].message.content or "").strip(), usage
 
     def __call__(self, messages: List[Dict[str, str]]) -> str:

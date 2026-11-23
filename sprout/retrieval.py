@@ -1,4 +1,4 @@
-"""Retrieval over the LanceDB Wikipedia science index: vector, full-text, hybrid (min-max fused), or hybrid with a
+"""Retrieval over the LanceDB Wikipedia index (paragraph chunks in wiki_v4_para): vector, full-text, hybrid (min-max fused), or hybrid with a
 cross-encoder reranker. Same methods as rag/retrieval_benchmark.py; the agent uses the one the benchmark picks."""
 import re
 import time
@@ -10,7 +10,8 @@ import pandas as pd
 EMBED_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
 RERANK_MODEL = "cross-encoder/ms-marco-MiniLM-L-6-v2"
 CANDIDATES = 100
-RERANK_POOL = 50
+RERANK_POOL = 50          # default; the paragraph table uses 20 (AgentConfig.rerank_pool)
+SENT = re.compile(r"(?<=[.!?])\s+(?=[A-Z0-9\"'])")
 
 
 @dataclass
@@ -30,11 +31,11 @@ def minmax(s):
 
 
 class Retriever:
-    def __init__(self, db_path, table, method="hybrid_rerank", alpha=0.5):
+    def __init__(self, db_path, table, method="hybrid_rerank", alpha=0.5, rerank_pool=RERANK_POOL):
         import lancedb
         from sentence_transformers import SentenceTransformer
         self.table = lancedb.connect(db_path).open_table(table)
-        self.method, self.alpha = method, alpha
+        self.method, self.alpha, self.rerank_pool = method, alpha, rerank_pool
         self.embedder = SentenceTransformer(EMBED_MODEL, device="cpu")
         self.reranker = None
         if method == "hybrid_rerank":
@@ -45,6 +46,9 @@ class Retriever:
             for p in self.reranker.model.parameters():
                 p.data = p.data.clone()
         self.cols = ["id", "topic", "search_text"]
+        self.chunked = "article_id" in self.table.schema.names      # paragraph table (wiki_v4_para)
+        if self.chunked:
+            self.cols += ["article_id", "para_idx"]
 
     def _vector(self, q, k):
         df = self.table.search(self.embedder.encode(q).tolist()).metric("cosine").select(self.cols).limit(k).to_pandas()
@@ -59,8 +63,8 @@ class Retriever:
     def _hybrid(self, q):
         vec, fts = self._vector(q, CANDIDATES), self._fts(q, CANDIDATES)
         m = pd.merge(vec[self.cols + ["score"]], fts[self.cols + ["score"]], on="id", how="outer", suffixes=("_v", "_t"))
-        m["topic"] = m.topic_v.fillna(m.topic_t)
-        m["search_text"] = m.search_text_v.fillna(m.search_text_t)
+        for c in self.cols[1:]:
+            m[c] = m[c + "_v"].fillna(m[c + "_t"])
         m["score"] = (1 - self.alpha) * minmax(m.score_v.fillna(0.0)) + self.alpha * minmax(m.score_t.fillna(0.0))
         return m.sort_values("score", ascending=False)[self.cols + ["score"]]
 
@@ -72,10 +76,40 @@ class Retriever:
         else:
             df = self._hybrid(q)
             if self.reranker is not None:
-                df = df.head(RERANK_POOL).copy()
+                df = df.head(self.rerank_pool).copy()
                 df["score"] = self.reranker.predict([(q, t) for t in df.search_text.tolist()])
                 df = df.sort_values("score", ascending=False)
+        if self.chunked:
+            return self._merge_adjacent(df, k)
         return [Passage(str(r.id), str(r.topic), str(r.search_text), float(r.score)) for r in df.head(k).itertuples()]
+
+    @staticmethod
+    def _merge_adjacent(df, k):
+        """Top k passages; a chunk next to an already chosen chunk of the same article is merged into it (chunks
+        overlap by one paragraph, so repeated sentences are dropped) and the next candidate fills the slot."""
+        groups = []
+        for r in df.itertuples():
+            g = next((g for g in groups if g["article"] == r.article_id
+                      and any(abs(int(r.para_idx) - i) <= 1 for i in g["idx"])), None)
+            if g is None:
+                if len(groups) == k:
+                    break
+                groups.append(dict(article=r.article_id, idx=[int(r.para_idx)], rows=[r], score=float(r.score)))
+            else:
+                g["idx"].append(int(r.para_idx)); g["rows"].append(r)
+        out = []
+        for g in groups:
+            rows = sorted(g["rows"], key=lambda r: int(r.para_idx))
+            seen, sents = set(), []
+            for j, r in enumerate(rows):
+                body = str(r.search_text) if j == 0 else str(r.search_text).split(": ", 1)[-1]
+                for x in SENT.split(body):
+                    if x not in seen:
+                        seen.add(x); sents.append(x)
+            ids = sorted(g["idx"])
+            pid = f"{g['article']}#p{ids[0]}" + (f"-{ids[-1]}" if len(ids) > 1 else "")
+            out.append(Passage(pid, str(rows[0].topic), " ".join(sents), g["score"]))
+        return out
 
 
 class StaticRetriever:

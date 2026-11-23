@@ -265,6 +265,10 @@ def stage_report(a, queries):
     Q["science"] = Q.domain.map(lambda d: "science" if d in SCIENCE else ("unknown" if d == "unknown" else "non-science"))
 
     methods = list(next(iter(runs.values()))["methods"])
+    partial = [m for m in methods if any(m not in runs[q]["methods"] for q in Q.index)]
+    if partial:                         # e.g. a method still running: report the rest instead of failing
+        print(f"skipping methods missing for some queries: {partial}")
+        methods = [m for m in methods if m not in partial]
     rows, per_query = [], {}
     for m in methods:
         s1 = s3 = s5 = rr = nd = 0.0; secs = []

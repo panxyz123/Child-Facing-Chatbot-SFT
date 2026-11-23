@@ -1,4 +1,4 @@
-"""Export the agent's rag prompts (route -> retrieve -> build_messages, no gate) for questions in a jsonl, so the answers
+"""Export the agent's rag prompts (route -> retrieve -> gate -> build_messages, as configured in AgentConfig) for questions in a jsonl, so the answers
 can be generated elsewhere (e.g. Colab). Retrieval and the router run here.
 
     python scripts/export_e2e_prompts.py --in results/qwen_norag_questions.jsonl --out results/qwen_rag_prompts.jsonl
@@ -12,10 +12,12 @@ ap = argparse.ArgumentParser()
 ap.add_argument("--in", dest="inp", required=True)
 ap.add_argument("--out", required=True)
 ap.add_argument("--db", default="rag/lancedb_data")
-ap.add_argument("--table", default="wiki_v3")
+ap.add_argument("--table", default=None, help="default: the agent config (wiki_v4_para)")
 a = ap.parse_args()
 
-cfg = AgentConfig(); cfg.trace_path = None; cfg.db_path, cfg.table = a.db, a.table
+cfg = AgentConfig(); cfg.trace_path = None; cfg.db_path = a.db
+if a.table:
+    cfg.table = a.table
 agent = SproutAgent(cfg, llm=StubLLM(), token_counter=lambda t: int(len(t.split()) * 1.4) + 1)
 n_used = 0
 with open(a.out, "w", encoding="utf-8") as f:
@@ -28,4 +30,4 @@ with open(a.out, "w", encoding="utf-8") as f:
         n_used += s.get("gate") == "used"
         f.write(json.dumps(dict(r, messages=msgs, route=s["route"], gate=s.get("gate"), top_score=s.get("top_score"),
                                 sources=[p["title"] for p in s.get("passages", [])]), ensure_ascii=False) + "\n")
-print(f"wrote {a.out}; passages used for {n_used} questions")
+print(f"wrote {a.out}; table {cfg.table}, gate {cfg.gate_threshold}: passages used for {n_used} questions")

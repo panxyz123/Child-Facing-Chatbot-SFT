@@ -20,7 +20,10 @@ a = ap.parse_args()
 import lancedb
 db = lancedb.connect(a.db)
 if a.dst in db.table_names():
-    raise SystemExit(f"{a.dst} exists; pick another --dst (tables are never overwritten)")
+    t = db.open_table(a.dst)
+    have = {i.name if hasattr(i, "name") else str(i) for i in t.list_indices()}
+    raise SystemExit(f"{a.dst} exists ({t.count_rows()} rows, indexes: {have or 'none'}); tables are never "
+                     f"overwritten. article_weighted.py needs only the vector and full-text indexes.")
 base = db.open_table(a.base).to_pandas()
 simple_ids = set(base.id[base.id.str.startswith("simple-")])
 expert = base[~base.id.str.startswith("simple-")].copy()
@@ -47,7 +50,12 @@ for c in ("id", "article_id", "topic", "section", "search_text", "category", "ur
 df["para_idx"] = df.para_idx.astype("int32")
 print(f"total {len(df)} rows ({len(expert)} expert leads)")
 
-t = db.create_table(a.dst, data=df)
+import pyarrow as pa
+schema = pa.schema([("id", pa.string()), ("article_id", pa.string()), ("topic", pa.string()),
+                    ("section", pa.string()), ("para_idx", pa.int32()), ("search_text", pa.string()),
+                    ("vector", pa.list_(pa.float32(), 384)), ("category", pa.string()), ("url", pa.string())])
+df["vector"] = [v.tolist() for v in df.vector]
+t = db.create_table(a.dst, data=pa.Table.from_pandas(df, schema=schema, preserve_index=False))
 t.create_fts_index("search_text", replace=True)
-t.create_scalar_index("article_id")
+t.create_scalar_index("article_id")     # BTree needs utf8, not large_utf8: hence the explicit schema
 print("built", a.dst, t.count_rows(), "rows")

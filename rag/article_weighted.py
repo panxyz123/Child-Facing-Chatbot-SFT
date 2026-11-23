@@ -8,8 +8,10 @@ evaluated against the existing methods on the same queries, judged with the same
   chunks   the top TOP_CHUNKS chunks (by ce) of the kept articles; adjacent chunks of one article are merged
            (sentences already present are dropped, since chunks overlap by one paragraph)
   ablation para_rerank: the same recall + cross-encoder, no article step (shows what the article step adds)
+  rerankers  each method runs with MiniLM (current) and bge-reranker-v2-m3 (the earlier project's); methods are
+           named <method>_<reranker>, so the report compares them side by side
 
-    python rag/article_weighted.py --n 60                       # -> results/retrieval_v4/{runs,relevance}.jsonl
+    python rag/article_weighted.py --n 60 --rerankers minilm,bge                     # -> results/retrieval_v4/{runs,relevance}.jsonl
     python rag/retrieval_benchmark.py --stage judge  --out results/retrieval_v4          # new passages only
     python rag/retrieval_benchmark.py --stage report --out results/retrieval_v4 --router models/router.joblib
 """
@@ -19,13 +21,21 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import retrieval_benchmark as RB
 
 RECALL, N_ARTICLES, THRESH, TOP_CHUNKS = 20, 2, 0.8, 3      # = RETRIEVAL_K, top-2 files, FILE_SCORE_THRESH, TOP_N
+RERANKERS = {"minilm": "cross-encoder/ms-marco-MiniLM-L-6-v2",     # 22M, the current reranker
+             "bge": "BAAI/bge-reranker-v2-m3"}                     # 568M, the earlier project's reranker
 SENT = re.compile(r"(?<=[.!?])\s+(?=[A-Z0-9\"'])")
 
 
 class ParaRetriever(RB.Retriever):
-    def __init__(self, db_path, table_name):
+    def __init__(self, db_path, table_name, reranker="minilm"):
         super().__init__(db_path, table_name)
         self.cols = ["id", "article_id", "topic", "para_idx", "search_text"]
+        self.tag = reranker
+        if reranker != "minilm":
+            from sentence_transformers import CrossEncoder
+            self.reranker = CrossEncoder(RERANKERS[reranker], device="cpu", max_length=512)
+            for p in self.reranker.model.parameters():      # same macOS misaligned-weights workaround
+                p.data = p.data.clone()
 
     @staticmethod
     def _fuse(vec, fts, alpha):
@@ -43,7 +53,8 @@ class ParaRetriever(RB.Retriever):
         fts, _ = self._fts(q, RB.CANDIDATES)
         pool = self._fuse(vec, fts, 0.5).head(RECALL).copy()
         pool["ce"] = self.reranker.predict([(q, t) for t in pool.search_text.tolist()])
-        pool["s"] = 1 / (1 + np.exp(-pool.ce))
+        ce = pool.ce.values                 # some rerankers return logits, some probabilities: make both (0, 1)
+        pool["s"] = ce if (ce.min() >= 0 and ce.max() <= 1) else 1 / (1 + np.exp(-ce))
         pool = pool.sort_values("ce", ascending=False).reset_index(drop=True)
         t_rerank = time.perf_counter() - t0
         para = [dict(id=r.id, text=r.search_text, score=float(r.ce)) for r in pool.head(RB.TOP_K).itertuples()]
@@ -75,7 +86,8 @@ class ParaRetriever(RB.Retriever):
                 spans.append(dict(id=f"{a}#p{ids[0]}" + (f"-{ids[-1]}" if len(ids) > 1 else ""),
                                   text=" ".join(out), score=float(max(r.ce for r in g))))
         spans.sort(key=lambda d: -d["score"])
-        return {"para_rerank": (para, t_rerank), "article_weighted": (spans, time.perf_counter() - t0)}
+        return {f"para_rerank_{self.tag}": (para, t_rerank),
+                f"article_weighted_{self.tag}": (spans, time.perf_counter() - t0)}
 
 
 def main():
@@ -85,6 +97,7 @@ def main():
     ap.add_argument("--table", default="wiki_v4_para")
     ap.add_argument("--base", default="results/retrieval_v3", help="runs + grades of the existing methods")
     ap.add_argument("--out", default="results/retrieval_v4")
+    ap.add_argument("--rerankers", default="minilm,bge", help=f"any of {','.join(RERANKERS)}")
     a = ap.parse_args()
     qids = [r["qid"] for r in csv.DictReader(open(os.path.join(a.base, "per_query.csv"), encoding="utf-8"))]
     if a.n and a.n < len(qids):
@@ -96,22 +109,25 @@ def main():
     if not os.path.exists(rel_dst):                          # reuse every grade already paid for
         shutil.copy(os.path.join(a.base, "relevance.jsonl"), rel_dst)
     path = os.path.join(a.out, "runs.jsonl")
-    done = {json.loads(l)["qid"] for l in open(path)} if os.path.exists(path) else set()
-    todo = [q for q in qids if q not in done]
-    print(f"{len(qids)} queries, {len(todo)} to run; table {a.table}")
-    if not todo:
-        return
-    r = ParaRetriever(a.db, a.table); r.run("warm up the models")
-    with open(path, "a", encoding="utf-8") as f:
+    runs = {json.loads(l)["qid"]: json.loads(l) for l in open(path, encoding="utf-8")} if os.path.exists(path) else {}
+    for qid in qids:
+        runs.setdefault(qid, base[qid])
+    for tag in a.rerankers.split(","):
+        todo = [q for q in qids if f"article_weighted_{tag}" not in runs[q]["methods"]]
+        print(f"{tag}: {len(todo)} of {len(qids)} queries to run; table {a.table}")
+        if not todo:
+            continue
+        r = ParaRetriever(a.db, a.table, tag); r.run("warm up the models")
         for i, qid in enumerate(todo, 1):
-            rec = base[qid]
             for m, (items, t) in r.run(queries[qid]["question"]).items():
-                rec["methods"][m] = dict(seconds=round(t, 4), ids=[d["id"] for d in items],
-                                         scores=[d["score"] for d in items],
-                                         passages={d["id"]: d["text"][:1200] for d in items})
-            f.write(json.dumps(rec, ensure_ascii=False) + "\n")
+                runs[qid]["methods"][m] = dict(seconds=round(t, 4), ids=[d["id"] for d in items],
+                                               scores=[d["score"] for d in items],
+                                               passages={d["id"]: d["text"][:1200] for d in items})
             if i % 10 == 0 or i == len(todo):
                 print(f"  {i}/{len(todo)}")
+                with open(path, "w", encoding="utf-8") as f:       # rewritten in place, so progress is kept
+                    for q in qids:
+                        f.write(json.dumps(runs[q], ensure_ascii=False) + "\n")
     print("note: article_weighted returns at most", TOP_CHUNKS, "spans, so its @5 metrics use fewer items")
 
 

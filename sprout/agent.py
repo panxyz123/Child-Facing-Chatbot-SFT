@@ -14,6 +14,7 @@
 
 Every node records its latency in the trace, so a response shows which path it took and where the time went.
 """
+import re
 import threading
 import time
 from typing import Any, Callable, Dict, List, Optional, TypedDict
@@ -25,6 +26,14 @@ from .config import AgentConfig, system_prompt
 from .tracing import TraceLogger, build_record, new_request_id
 
 MSG_OVERHEAD = 6     # chat-template tokens around each message (<|role|>, newline, </s>)
+SENT_END = re.compile(r"[.!?][\"')\]]*(?=\s|$)")
+
+
+def trim_to_sentence(text: str) -> str:
+    """An answer cut at max_tokens ends mid-sentence: keep it up to the last complete sentence (unchanged when there
+    is none, so a very long first sentence is still shown)."""
+    ends = [m.end() for m in SENT_END.finditer(text)]
+    return text[: ends[-1]].rstrip() if ends else text
 
 
 class State(TypedDict, total=False):
@@ -41,6 +50,7 @@ class State(TypedDict, total=False):
     simplify: bool
     regenerations: int
     answer: str
+    truncated: bool         # the answer hit max_tokens and was trimmed to its last complete sentence
     usage: Optional[Dict[str, int]]
     prompt_tokens_est: int
     history_turns: int
@@ -63,7 +73,7 @@ class SproutAgent:
             llm = ChatLLM(c.llm_base_url, c.llm_model, c.temperature, c.top_p, c.top_k, c.repetition_penalty, c.max_tokens)
         if retriever is None:
             from .retrieval import Retriever
-            retriever = Retriever(c.db_path, c.table, c.retrieval_method, c.hybrid_alpha)
+            retriever = Retriever(c.db_path, c.table, c.retrieval_method, c.hybrid_alpha, c.rerank_pool)
         if router is None:
             from .router import KnowledgeRouter
             router = KnowledgeRouter(c.router_path)
@@ -155,9 +165,12 @@ class SproutAgent:
             answer, usage = self.llm.chat(msgs)
         else:
             answer, usage = self.llm(msgs), None
+        truncated = bool(usage) and usage.get("finish_reason") == "length"
+        if truncated:
+            answer = trim_to_sentence(answer)
         if usage and s.get("usage"):        # a regeneration: add up the tokens of both calls
-            usage = {k: usage[k] + s["usage"].get(k, 0) for k in usage}
-        return dict(answer=answer, usage=usage, prompt_tokens_est=est, history_turns=turns)
+            usage = {k: (v + s["usage"].get(k, 0) if isinstance(v, (int, float)) else v) for k, v in usage.items()}
+        return dict(answer=answer, usage=usage, prompt_tokens_est=est, history_turns=turns, truncated=truncated)
 
     def output_guard(self, s: State):
         c = self.cfg
@@ -210,6 +223,7 @@ class SproutAgent:
                    p_knowledge=s.get("p_knowledge"), guard=s.get("guard_category"), gate=s.get("gate"),
                    sources=[p["title"] for p in s.get("passages", [])], top_score=s.get("top_score"),
                    fkgl=s.get("fkgl"), output_flag=s.get("output_flag"), regenerations=s.get("regenerations", 0),
+                   truncated=s.get("truncated", False),
                    usage=s.get("usage"), prompt_tokens_est=s.get("prompt_tokens_est"),
                    history_turns=s.get("history_turns"), trace=s["trace"],
                    latency_ms=round(1000 * (time.perf_counter() - t0), 1))
