@@ -1,0 +1,16 @@
+{
+ "tag": "qwen3guard06b_metal",
+ "n": 100,
+ "max_tokens": 8,
+ "p50_ms": 393.11354188248515,
+ "p95_ms": 766.1721669137478,
+ "mean_ms": 442.83746677916497,
+ "labels": {
+  "Safe": 35,
+  "Unsafe": 52,
+  "Controversial": 13
+ },
+ "unparsed": 0,
+ "agree_with_colab": 1.0,
+ "compared": 100
+}

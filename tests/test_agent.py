@@ -170,3 +170,51 @@ def test_reset_session_forgets_history():
     agent.respond("hi", "7-9", session_id="r")
     agent.reset_session("r")
     assert "r" not in agent.sessions
+
+
+class StubGuardModel:
+    """Stands in for the Qwen3Guard server: returns a fixed label, or raises to simulate an outage."""
+
+    def __init__(self, label="Safe", fail=False):
+        from sprout import guards
+        self.calls, self.g = [], guards.ModelGuard.__new__(guards.ModelGuard)
+        self.g.controversial_unsafe, self.g.fail_closed = True, True
+        self.g.label = self._label
+        self.lab, self.fail = label, fail
+
+    def _label(self, prompt, response):
+        self.calls.append((prompt, response))
+        if self.fail:
+            raise ConnectionError("guard down")
+        return self.lab
+
+    def check(self, prompt, response):
+        return self.g.check(prompt, response)
+
+
+def make_guarded(label, fail=False):
+    gm = StubGuardModel(label, fail)
+    agent = SproutAgent(AgentConfig(), llm=StubLLM(["Plants drink water through their roots."]),
+                        retriever=CountingRetriever([SKY]), router=Router(0.1), token_counter=words, guard_model=gm)
+    return agent, gm
+
+
+def test_guard_model_sees_message_and_answer_and_passes_safe():
+    agent, gm = make_guarded("Safe")
+    out = agent.respond("how do plants drink?", "7-9")
+    assert out["answer"] == "Plants drink water through their roots." and out["output_flag"] is None
+    assert gm.calls == [("how do plants drink?", "Plants drink water through their roots.")]
+
+
+def test_guard_model_blocks_unsafe_and_controversial():
+    for lab in ("Unsafe", "Controversial"):
+        agent, _ = make_guarded(lab)
+        out = agent.respond("how do plants drink?", "7-9")
+        assert out["output_flag"] == "unsafe_output" and out["guard_model_label"] == lab
+        assert "roots" not in out["answer"]
+
+
+def test_guard_model_outage_fails_closed():
+    agent, _ = make_guarded("Safe", fail=True)
+    out = agent.respond("how do plants drink?", "7-9")
+    assert out["output_flag"] == "unsafe_output" and "roots" not in out["answer"]

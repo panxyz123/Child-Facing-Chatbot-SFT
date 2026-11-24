@@ -51,6 +51,7 @@ class State(TypedDict, total=False):
     regenerations: int
     answer: str
     truncated: bool         # the answer hit max_tokens and was trimmed to its last complete sentence
+    guard_model_label: Optional[str]   # the output guard model's verdict when it blocked the answer
     usage: Optional[Dict[str, int]]
     prompt_tokens_est: int
     history_turns: int
@@ -62,7 +63,7 @@ class State(TypedDict, total=False):
 
 class SproutAgent:
     def __init__(self, config: AgentConfig = None, llm=None, retriever=None, router=None,
-                 token_counter: Callable[[str], int] = None):
+                 token_counter: Callable[[str], int] = None, guard_model=None):
         self.cfg = config or AgentConfig()
         c = self.cfg
         self.count_tokens = token_counter or self._default_counter()
@@ -73,11 +74,15 @@ class SproutAgent:
             llm = ChatLLM(c.llm_base_url, c.llm_model, c.temperature, c.top_p, c.top_k, c.repetition_penalty, c.max_tokens)
         if retriever is None:
             from .retrieval import Retriever
-            retriever = Retriever(c.db_path, c.table, c.retrieval_method, c.hybrid_alpha, c.rerank_pool)
+            retriever = Retriever(c.db_path, c.table, c.retrieval_method, c.hybrid_alpha, c.rerank_pool,
+                                  c.ann_nprobes, c.ann_refine)
         if router is None:
             from .router import KnowledgeRouter
             router = KnowledgeRouter(c.router_path)
-        self.llm, self.retriever, self.router = llm, retriever, router
+        if guard_model is None and c.guard_url:
+            guard_model = guards.ModelGuard(c.guard_url, c.guard_model, c.guard_controversial_unsafe,
+                                            c.guard_fail_closed, c.guard_timeout, tokenizer=c.guard_tokenizer)
+        self.llm, self.retriever, self.router, self.guard_model = llm, retriever, router, guard_model
         self.sessions: Dict[str, List[Dict[str, str]]] = {}
         self.graph = self._build()
 
@@ -177,6 +182,11 @@ class SproutAgent:
         r = guards.check_output(s["answer"])
         if not r.passed:
             return dict(output_flag=r.category, answer=guards.safe_reply(r.category, s["age"], c.crisis_line))
+        if self.guard_model is not None:            # second layer: the guard model reads message + answer
+            m = self.guard_model.check(s["text"], s["answer"])
+            if not m.passed:
+                return dict(output_flag=m.category, guard_model_label=(m.matches or [None])[0],
+                            answer=guards.safe_reply(m.category, s["age"], c.crisis_line))
         hard, g = guards.too_hard(s["answer"], s["age"], c.fkgl_band, c.fkgl_too_hard_margin, c.min_words_for_fkgl)
         n = s.get("regenerations", 0)
         if hard and n < c.max_regenerations:
@@ -223,7 +233,7 @@ class SproutAgent:
                    p_knowledge=s.get("p_knowledge"), guard=s.get("guard_category"), gate=s.get("gate"),
                    sources=[p["title"] for p in s.get("passages", [])], top_score=s.get("top_score"),
                    fkgl=s.get("fkgl"), output_flag=s.get("output_flag"), regenerations=s.get("regenerations", 0),
-                   truncated=s.get("truncated", False),
+                   truncated=s.get("truncated", False), guard_model_label=s.get("guard_model_label"),
                    usage=s.get("usage"), prompt_tokens_est=s.get("prompt_tokens_est"),
                    history_turns=s.get("history_turns"), trace=s["trace"],
                    latency_ms=round(1000 * (time.perf_counter() - t0), 1))

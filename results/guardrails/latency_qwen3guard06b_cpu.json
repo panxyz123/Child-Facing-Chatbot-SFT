@@ -1,0 +1,16 @@
+{
+ "tag": "qwen3guard06b_cpu",
+ "n": 100,
+ "max_tokens": 8,
+ "p50_ms": 926.9820423796773,
+ "p95_ms": 1628.1475415453315,
+ "mean_ms": 1031.183981206268,
+ "labels": {
+  "Safe": 35,
+  "Unsafe": 52,
+  "Controversial": 13
+ },
+ "unparsed": 0,
+ "agree_with_colab": 1.0,
+ "compared": 100
+}

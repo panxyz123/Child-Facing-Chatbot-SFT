@@ -1,11 +1,15 @@
 """Retrieval over the LanceDB Wikipedia index (paragraph chunks in wiki_v4_para): vector, full-text, hybrid (min-max fused), or hybrid with a
 cross-encoder reranker. Same methods as rag/retrieval_benchmark.py; the agent uses the one the benchmark picks."""
+import os
 import re
 import time
 from dataclasses import dataclass
 from typing import List
 
 import pandas as pd
+
+# lance logs a per-query deprecation warning about the FTS `_score` column; keep only errors (override with LANCE_LOG)
+os.environ.setdefault("LANCE_LOG", "error")
 
 EMBED_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
 RERANK_MODEL = "cross-encoder/ms-marco-MiniLM-L-6-v2"
@@ -31,11 +35,13 @@ def minmax(s):
 
 
 class Retriever:
-    def __init__(self, db_path, table, method="hybrid_rerank", alpha=0.5, rerank_pool=RERANK_POOL):
+    def __init__(self, db_path, table, method="hybrid_rerank", alpha=0.5, rerank_pool=RERANK_POOL, nprobes=200,
+                 refine_factor=20):
         import lancedb
         from sentence_transformers import SentenceTransformer
         self.table = lancedb.connect(db_path).open_table(table)
         self.method, self.alpha, self.rerank_pool = method, alpha, rerank_pool
+        self.nprobes, self.refine_factor = nprobes, refine_factor   # IVF-PQ search (ignored if the table has no index)
         self.embedder = SentenceTransformer(EMBED_MODEL, device="cpu")
         self.reranker = None
         if method == "hybrid_rerank":
@@ -51,7 +57,10 @@ class Retriever:
             self.cols += ["article_id", "para_idx"]
 
     def _vector(self, q, k):
-        df = self.table.search(self.embedder.encode(q).tolist()).metric("cosine").select(self.cols).limit(k).to_pandas()
+        qb = self.table.search(self.embedder.encode(q).tolist()).metric("cosine").nprobes(self.nprobes)
+        if self.refine_factor:
+            qb = qb.refine_factor(self.refine_factor)
+        df = qb.select(self.cols).limit(k).to_pandas()
         df["score"] = 1.0 - df["_distance"]
         return df
 

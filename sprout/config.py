@@ -40,6 +40,8 @@ class AgentConfig:
     table: str = os.environ.get("LANCE_TABLE_NAME", "wiki_v4_para")   # paragraph chunks
     retrieval_method: str = "hybrid_rerank"   # vector | fts | hybrid | hybrid_rerank (best: results/retrieval_v4)
     rerank_pool: int = 20                     # hybrid candidates the cross-encoder reorders
+    ann_nprobes: int = 200                    # IVF-PQ partitions searched: recall@20 0.975 vs exact, p50 30 ms vs 667 ms
+    ann_refine: int = 20                      # re-score 20x candidates with full vectors (results/retrieval_v4/ann_index_high.json)
     hybrid_alpha: float = 0.5                 # weight on the full-text score
     top_k_docs: int = 2                       # passages in the prompt (2048-token serving window)
     passage_words: int = 150                  # each passage cut to this many words (= the chunk size)
@@ -50,6 +52,15 @@ class AgentConfig:
     min_words_for_fkgl: int = 20              # FKGL is too noisy below this
     max_regenerations: int = 1
     crisis_line: str = "988"                  # US Suicide & Crisis Lifeline (call or text); locale-specific
+
+    # output guard model (second output layer after the rules): Qwen3Guard-Gen judges message + answer.
+    # None = rules only. Chosen on the dev split of the safety suite (results/guardrails/guard_models/).
+    guard_url: Optional[str] = os.environ.get("SPROUT_GUARD_URL")      # e.g. http://localhost:8090/v1
+    guard_model: str = os.environ.get("SPROUT_GUARD_MODEL", "guard")
+    guard_tokenizer: str = "Qwen/Qwen3Guard-Gen-0.6B"   # its chat template builds the moderation prompt
+    guard_controversial_unsafe: bool = True   # "Controversial" is blocked too: stricter policy for children
+    guard_fail_closed: bool = True            # guard unreachable or unparseable -> safe reply, never the raw answer
+    guard_timeout: float = 10.0
 
     fkgl_band: Dict[str, Tuple[float, float]] = field(default_factory=lambda: dict(FKGL_BAND))
 

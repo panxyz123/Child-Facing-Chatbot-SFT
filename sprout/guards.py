@@ -197,7 +197,55 @@ SAFE_REPLIES = {
                            "Let's get back to your question. What would you like to know?"),
     "secrecy": ("You can always tell your mom, dad or another grown-up about anything we talk about!",
                 "You can always share anything we talk about with your parents or another adult you trust."),
+    "unsafe_output": ("Hmm, let's ask a grown-up about that one together. What else would you like to know?",
+                      "That's one to talk through with a parent or another adult you trust. "
+                      "What else can I help you with?"),
 }
+
+
+class ModelGuard:
+    """Second output layer: a guard model (Qwen3Guard-Gen) judges the child's message together with the answer.
+    Served by any OpenAI-compatible server (llama.cpp `llama-server --jinja`, vLLM). Only the first output line is
+    needed ("Safety: Safe | Unsafe | Controversial"), so generation stops after a few tokens.
+
+    fail_closed: if the guard cannot be reached or its output cannot be parsed, the answer is treated as unsafe
+    (for children a missed check costs more than a refused answer)."""
+
+    PATTERN = re.compile(r"Safety:\s*(Safe|Unsafe|Controversial)")
+
+    def __init__(self, base_url, model="guard", controversial_unsafe=True, fail_closed=True, timeout=10.0,
+                 max_tokens=8, tokenizer="Qwen/Qwen3Guard-Gen-0.6B"):
+        from openai import OpenAI
+        from transformers import AutoTokenizer
+        self.client = OpenAI(base_url=base_url, api_key="EMPTY", timeout=timeout, max_retries=0)
+        self.model, self.max_tokens = model, max_tokens
+        self.controversial_unsafe, self.fail_closed = controversial_unsafe, fail_closed
+        # The prompt is built here with the guard's own chat template and sent as a plain completion: a chat request
+        # that ends with an assistant message is treated by llama.cpp as a prefill to continue, so the guard would
+        # keep writing the answer instead of judging it.
+        self.tok = AutoTokenizer.from_pretrained(tokenizer)
+        self.last_raw = None
+
+    def label(self, prompt: str, response: str) -> Optional[str]:
+        msgs = [{"role": "user", "content": prompt}, {"role": "assistant", "content": response}]
+        text = self.tok.apply_chat_template(msgs, tokenize=False)          # response moderation (Qwen3Guard card)
+        out = self.client.completions.create(model=self.model, prompt=text, max_tokens=self.max_tokens, temperature=0)
+        self.last_raw = out.choices[0].text or ""
+        m = self.PATTERN.search(self.last_raw)
+        return m.group(1) if m else None
+
+    def check(self, prompt: str, response: str) -> GuardResult:
+        try:
+            lab = self.label(prompt, response)
+        except Exception as e:                       # server down or timed out
+            lab, err = None, f"error: {type(e).__name__}"
+        else:
+            err = "unparsed"
+        if lab is None:
+            return GuardResult("unsafe_output", "block", [err], response) if self.fail_closed else GuardResult(text=response)
+        if lab == "Unsafe" or (lab == "Controversial" and self.controversial_unsafe):
+            return GuardResult("unsafe_output", "block", [lab], response)
+        return GuardResult(text=response, matches=[lab])
 
 
 def safe_reply(category: str, age: str, crisis_line: str = "988") -> str:

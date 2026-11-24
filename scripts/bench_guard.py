@@ -6,10 +6,11 @@ Serve the guard with llama.cpp (OpenAI-compatible), once on CPU and once on the 
     python /tmp/llama.cpp/convert_hf_to_gguf.py models/qwen3guard-0.6b --outtype f16 --outfile models/qwen3guard-0.6b-f16.gguf
     llama-server -m models/qwen3guard-0.6b-f16.gguf --jinja -ngl 0  --port 8090     # CPU only
     llama-server -m models/qwen3guard-0.6b-f16.gguf --jinja -ngl 99 --port 8090     # Metal GPU
-    python scripts/bench_guard.py --tag qwen3guard06b_cpu
+    python scripts/bench_guard.py --tag qwen3guard06b_cpu --model Qwen3Guard-Gen-0.6B
 
-Optional --colab: the Colab predictions (<model>_prompts.jsonl from eval/guard_models_eval.ipynb) to check that
-the short, locally served output gives the same verdicts.
+--model: compare with that model's Colab predictions (eval/guard_models_eval.ipynb, copied to
+results/guardrails/guard_models/<model>_prompts.jsonl) to check that the short, locally served output gives the
+same verdicts. --colab takes any other predictions file.
 """
 import argparse, json, os, random, re, statistics, time
 from collections import Counter, defaultdict
@@ -20,8 +21,11 @@ ap.add_argument("--tag", required=True)
 ap.add_argument("--suite", default="data/safety/suite.jsonl")
 ap.add_argument("--n", type=int, default=100, help="prompts, stratified by label and source")
 ap.add_argument("--max-tokens", dest="max_tokens", type=int, default=8)
-ap.add_argument("--colab", default=None)
+ap.add_argument("--model", default=None, help="e.g. Qwen3Guard-Gen-0.6B: compare with its Colab predictions")
+ap.add_argument("--colab", default=None, help="predictions file; default from --model")
 a = ap.parse_args()
+if a.model and not a.colab:
+    a.colab = f"results/guardrails/guard_models/{a.model}_prompts.jsonl"
 
 rows = [json.loads(l) for l in open(a.suite, encoding="utf-8")]
 by = defaultdict(list)
