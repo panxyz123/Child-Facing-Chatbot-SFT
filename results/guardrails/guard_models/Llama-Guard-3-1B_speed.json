@@ -1,0 +1,10 @@
+{
+ "model": "meta-llama/Llama-Guard-3-1B",
+ "gpu": "Tesla T4",
+ "backend": "transformers",
+ "n": 5218,
+ "batch_seconds": 281.55363845825195,
+ "prompts_per_s": 18.53288072771154,
+ "single_p50_ms": 73.12572002410889,
+ "single_p95_ms": 84.13715362548828
+}

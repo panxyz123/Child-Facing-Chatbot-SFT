@@ -1,0 +1,10 @@
+{
+ "model": "Qwen/Qwen3Guard-Gen-4B",
+ "gpu": "Tesla T4",
+ "backend": "vllm",
+ "n": 5218,
+ "batch_seconds": 703.8793017864227,
+ "prompts_per_s": 7.413202784563897,
+ "single_p50_ms": 622.524619102478,
+ "single_p95_ms": 744.0208911895752
+}

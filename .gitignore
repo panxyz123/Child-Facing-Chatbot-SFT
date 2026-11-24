@@ -68,3 +68,5 @@ adapters/
 # agent traces
 logs/
 data/wiki_para/
+data/safety/
+drive

@@ -25,7 +25,7 @@ from . import guards
 from .config import AgentConfig, system_prompt
 from .tracing import TraceLogger, build_record, new_request_id
 
-MSG_OVERHEAD = 6     # chat-template tokens around each message (<|role|>, newline, </s>)
+MSG_OVERHEAD = 6     # chat-template tokens around each message (ChatML: <|im_start|>role, newline, <|im_end|>)
 SENT_END = re.compile(r"[.!?][\"')\]]*(?=\s|$)")
 
 

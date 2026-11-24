@@ -38,7 +38,8 @@ async def one(client, a, msgs, rid, t_sched):
     try:
         stream = await client.chat.completions.create(
             model=a.model, messages=msgs, max_tokens=a.max_tokens, temperature=a.temperature, top_p=a.top_p,
-            stream=True, stream_options={"include_usage": True}, extra_body=dict({"top_k": a.top_k}, **({"ignore_eos": True} if a.ignore_eos else {})),
+            stream=True, stream_options={"include_usage": True}, extra_body=dict({"top_k": a.top_k}, **({a.rep_key: a.repetition_penalty} if a.repetition_penalty else {}),
+                            **({"ignore_eos": True} if a.ignore_eos else {})),
             stop=a.stop or None)
         async for ch in stream:
             if getattr(ch, "usage", None):
@@ -124,9 +125,14 @@ async def main():
     ap.add_argument("--ignore-eos", dest="ignore_eos", action="store_true",
                     help="every answer runs to --max-tokens (vLLM, llama.cpp): equal output lengths across servers; "
                          "check share_at_max_tokens = 1.0, a server that ignores the flag stops early")
-    ap.add_argument("--stop", default="</s>,<|user|>,<|system|>",
-                    help="comma list sent with every request (TinyLlama chat format, = models/sprout/Modelfile); "
-                         "'' for none. Servers differ in which stop strings they add on their own")
+    ap.add_argument("--stop", default="",
+                    help="comma list sent with every request; default none (the server's chat template ends the "
+                         "answer). TinyLlama runs used '</s>,<|user|>,<|system|>'")
+    ap.add_argument("--repetition-penalty", dest="repetition_penalty", type=float, default=1.05,
+                    help="the agent's value; 0 = do not send. Servers default to 1.0, Ollama to its Modelfile")
+    ap.add_argument("--rep-key", dest="rep_key", default="repetition_penalty",
+                    help="request field: repetition_penalty (vLLM) or repeat_penalty (llama.cpp); Ollama's OpenAI "
+                         "endpoint uses the Modelfile's repeat_penalty, so set it there")
     a = ap.parse_args()
     a.stop = [] if a.ignore_eos else [x for x in a.stop.split(",") if x]
     from openai import AsyncOpenAI

@@ -1,0 +1,10 @@
+{
+ "model": "allenai/wildguard",
+ "gpu": "Tesla T4",
+ "backend": "transformers 4-bit",
+ "n": 5218,
+ "batch_seconds": 3409.094341278076,
+ "prompts_per_s": 1.5306117923517955,
+ "single_p50_ms": 1972.7894067764282,
+ "single_p95_ms": 2455.6123733520503
+}

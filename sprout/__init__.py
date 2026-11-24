@@ -1,4 +1,4 @@
-"""Sprout: an age-aware RAG agent for children (fine-tuned TinyLlama served by vLLM).
+"""Sprout: an age-aware RAG agent for children (fine-tuned Qwen2.5-1.5B served by vLLM).
 
 SproutAgent is imported lazily, so the guardrails, router and config can be used (e.g. by eval/guard_eval.py)
 without LangGraph installed."""

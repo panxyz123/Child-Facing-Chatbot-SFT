@@ -15,13 +15,13 @@ also costs more than it does for adults, and parents need to trust the answers w
 
 Sprout is a prototype of an assistant built for that setting. A parent sets the child's age once, and every answer is
 written for that age: grounded in retrieved documents when the question needs facts, checked by guardrails, and
-served by a 1.1B model that fits on a single T4 GPU.
+served by a 1.5B model (Qwen2.5-1.5B-Instruct + LoRA) that runs on a laptop or a single T4 GPU.
 
 ## Highlights
 
-- **Age-aligned answers.** LoRA SFT, then GRPO with a readability reward. SFT raised answers at the right reading
-  level from 39% to 60%; GRPO raised the share of questions whose answers get harder as the set age rises from 75%
-  to 97.5%.
+- **Age-aligned answers.** LoRA SFT, then GRPO with a readability reward (developed on TinyLlama-1.1B). SFT raised
+  answers at the right reading level from 39% to 60%; GRPO raised the share of questions whose answers get harder
+  as the set age rises from 75% to 97.5%. The same SFT recipe on Qwen2.5-1.5B, the deployed model, raises it from 44% to 63%.
 - **Fewer hallucinated facts.** On the same test questions and judge, false claims fell from 33.0% to 14.9% by
   moving the generator to Qwen2.5-1.5B with the same LoRA SFT recipe and lower-temperature sampling
   ([`eval/README.md`](eval/README.md)).
@@ -31,12 +31,16 @@ served by a 1.1B model that fits on a single T4 GPU.
   ([`rag/README.md`](rag/README.md)).
 - **Safety.** Input guardrails (unsafe topics, personal information, prompt injection) and output guardrails (unsafe
   content, reading level against the set age).
-- **Small model, low deployment cost.** TinyLlama-1.1B-Chat with LoRA: about 2.2 GB of fp16 weights and about 22 KB of
-  KV cache per token (GQA), so the whole system runs on one 16 GB T4.
+- **Small model, low deployment cost.** Qwen2.5-1.5B-Instruct with LoRA: about 3.1 GB of fp16 weights and about 28 KB
+  of KV cache per token (GQA, 2 KV heads), so the whole system runs on one 16 GB T4, or on a laptop.
 - **Low latency through inference optimization.** vLLM continuous batching and PagedAttention: 10.6 ms per decoded
   token at batch 1 (vs 26.6 ms with HF `generate`), up to 3.0x throughput under concurrency, and prefix caching that
-  cut time-to-first-token from 305 ms to 48 ms on shared prompts. vLLM rollouts also made GRPO training steps 2.2x
-  faster.
+  cut time-to-first-token from 305 ms to 48 ms on shared prompts (TinyLlama, T4). vLLM rollouts also made GRPO
+  training steps 2.2x faster.
+- **Serving that scales with users, measured on real agent prompts.** On a MacBook Air, llama.cpp and vLLM
+  (vllm-metal) batch concurrent requests: at 8 users they deliver 7.1x and 6.1x Ollama's throughput with TTFT p95
+  under 0.3 s, while Ollama's MLX backend serves one request at a time (TTFT p95 15.7 s)
+  ([`serving/README.md`](serving/README.md)).
 
 ## System overview
 
@@ -49,7 +53,7 @@ child message + age set by the parent
         |                                                       |
         +-------------------------------------------------------+
         |
-  age-aware generation   TinyLlama + LoRA (SFT + GRPO), served by vLLM
+  age-aware generation   Qwen2.5-1.5B + LoRA (SFT), served by vLLM / llama.cpp
         |
   output guardrail       safety filter, reading-level check against the set age
         |
@@ -122,8 +126,10 @@ The fine-tuned model is served with vLLM and measured under the workloads the ag
 
 - HF `generate` vs vLLM: per-token latency and throughput under concurrency (continuous batching, PagedAttention)
 - prefix caching on shared system prompts, and where it stops helping (requests retrieving different documents)
-- KV cache capacity vs context length (GQA: about 22 KB per token)
+- KV cache capacity vs context length (GQA: about 22 KB per token for TinyLlama, 28 KB for Qwen2.5-1.5B)
 - realistic output lengths, multi-turn chat and RAG prompts, and SLO-based load tests (TTFT, TPOT)
+- one load generator for every OpenAI-compatible server (`scripts/bench_openai.py`): Ollama, llama.cpp and
+  vllm-metal on a laptop, vLLM on a GPU; details and results in [`serving/README.md`](serving/README.md)
 
 ## Results (single T4)
 
@@ -251,9 +257,17 @@ python -m pytest tests -q                 # offline tests of the agent graph, no
 python scripts/train_router.py            # knowledge router -> models/router.joblib
 ```
 
-Run the agent on a laptop with [Ollama](https://ollama.com) serving the model
-([yxpan/sprout-tinyllama-1.1b](https://huggingface.co/yxpan/sprout-tinyllama-1.1b), exported with
-`scripts/export_model.py`), or on a GPU with vLLM:
+Build the model: merge the Qwen SFT LoRA adapter (`sft/sft_lora_qwen_rag.ipynb`) into the base model, then serve
+it with llama.cpp on a laptop or vLLM on a GPU:
+
+```
+python scripts/merge_lora.py --adapter <adapter folder> --out models/sprout-qwen
+vllm serve models/sprout-qwen --served-model-name sprout --max-model-len 2048          # GPU, or vllm-metal on a Mac
+VLLM_BASE_URL=http://localhost:8000/v1 VLLM_MODEL=sprout python agent.py --age 7-9 --trace "why is the sky blue?"
+```
+
+The TinyLlama version ([yxpan/sprout-tinyllama-1.1b](https://huggingface.co/yxpan/sprout-tinyllama-1.1b), exported
+with `scripts/export_model.py`) runs with [Ollama](https://ollama.com):
 
 ```
 (cd models/sprout && ollama create sprout -f Modelfile)

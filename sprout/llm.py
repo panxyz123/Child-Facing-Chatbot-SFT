@@ -1,6 +1,6 @@
-"""Chat client for the generator: an OpenAI-compatible endpoint (vLLM serving the fine-tuned TinyLlama).
+"""Chat client for the generator: an OpenAI-compatible endpoint (vLLM / llama.cpp / Ollama serving the fine-tuned Qwen).
 
-vLLM applies TinyLlama's chat template on the server, so the messages below become the same prompt format the model
+The server applies the model's chat template (ChatML for Qwen) on the server, so the messages below become the same prompt format the model
 was trained on (system prompt with the set age, then the conversation)."""
 from typing import Callable, Dict, List
 

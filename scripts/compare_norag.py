@@ -7,6 +7,7 @@ runs = {"TinyLlama norag": "results/rag_e2e/norag_judgments.jsonl", "TinyLlama r
         "Qwen norag t0.3": "results/qwen_norag_t03_judgments.jsonl",
         "Qwen rag t0.3": "results/qwen_rag_t03_judgments.jsonl",
         "Qwen rag v4 t0.3": "results/qwen_rag_v4_t03_judgments.jsonl",
+        "Qwen GRPO rag v4 t0.3": "results/qwen_grpo_rag_v4_t03_judgments.jsonl",
         "TinyLlama norag t0.3": "results/tinyllama_norag_t03_judgments.jsonl",
         "TinyLlama rag t0.3": "results/tinyllama_rag_t03_judgments.jsonl"}
 J = {k: L(p) for k, p in runs.items() if os.path.exists(p)}
@@ -24,6 +25,6 @@ def pair(x, y):
         b = sum(J[x][i]["has_error"] and not J[y][i]["has_error"] for i in ids); w = sum(J[y][i]["has_error"] and not J[x][i]["has_error"] for i in ids)
         print(f"{y} vs {x}: fixed {b}, broken {w}")
 pair("TinyLlama norag", "Qwen norag"); pair("Qwen norag", "Qwen rag"); pair("Qwen norag", "Qwen norag t0.3"); pair("Qwen norag t0.3", "Qwen rag t0.3"); pair("Qwen rag", "Qwen rag t0.3")
-pair("Qwen norag t0.3", "Qwen rag v4 t0.3"); pair("Qwen rag t0.3", "Qwen rag v4 t0.3")
+pair("Qwen norag t0.3", "Qwen rag v4 t0.3"); pair("Qwen rag v4 t0.3", "Qwen GRPO rag v4 t0.3"); pair("Qwen rag t0.3", "Qwen rag v4 t0.3")
 pair("TinyLlama norag", "TinyLlama norag t0.3"); pair("TinyLlama norag t0.3", "TinyLlama rag t0.3")
 pair("TinyLlama norag t0.3", "Qwen norag t0.3"); pair("TinyLlama rag t0.3", "Qwen rag t0.3")

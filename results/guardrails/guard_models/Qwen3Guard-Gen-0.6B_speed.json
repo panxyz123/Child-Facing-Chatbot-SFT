@@ -1,0 +1,10 @@
+{
+ "model": "Qwen/Qwen3Guard-Gen-0.6B",
+ "gpu": "Tesla T4",
+ "backend": "transformers",
+ "n": 5218,
+ "batch_seconds": 599.5865261554718,
+ "prompts_per_s": 8.70266387314878,
+ "single_p50_ms": 509.7038745880127,
+ "single_p95_ms": 723.3580231666563
+}
